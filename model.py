@@ -22,20 +22,18 @@ def save_filters(cnn_model, Before_Training=True):
         savefig('at.png')
 
 
-def output_of_lambda(input_shape):
-    return (input_shape[0], 1, input_shape[2])
-
 
 def res_block(inputs):
-    x = Conv2D(filters=32, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu')(inputs)
-    x = Conv2D(filters=32, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None)(x)
+    x = Conv2D(filters=256, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu')(inputs)
+    x = Conv2D(filters=256, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None)(x)
     x = Lambda(lambda x: x * 0.1)(x)
     return add([x, inputs])
 
 
 def up_block(x, upscale_factor):
-    x = Conv2D(32, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None)(x)
-    x = UpSampling2D(size=(upscale_factor, upscale_factor))(x)
+    x = Conv2D(filters=256, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None)(x)
+    #x = UpSampling2D(size=(upscale_factor, upscale_factor))(x)
+    x = Subpixel(3, (3, 3),2, activation=None, padding='same')(x)
     return x
 
 
@@ -44,21 +42,19 @@ def up_block(x, upscale_factor):
 
 def get_model(patch_size, num_channels, upscale_factor):
     _input = Input(shape=(patch_size, patch_size, num_channels), name='input')
-    x_input_res_block = Conv2D(filters=32, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None)(_input)
+    x_input_res_block = Conv2D(filters=256, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None)(_input)
     x = x_input_res_block
     # add residual blocks
-    for i in range(1):
+    for i in range(32):
         x = res_block(x)
-    x = Conv2D(filters=32, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None)(x)
+    x = Conv2D(filters=256, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None)(x)
     # skip connection
     x = add([x, x_input_res_block])
-    x1 = Subpixel(num_channels, (3, 3), upscale_factor, activation=None, padding='same')(x)
     # upscale block
     x = up_block(x, upscale_factor)
     # x = Lambda(subpixel_layer)(x)
-    # final conv layer : activated with tanh -> pixels in [-1, 1]
-    x2 = Conv2D(3, kernel_size=(3, 3), strides=(1, 1), activation=None, padding='same')(x)
-    final_out = add([x1, x2])
+    # final conv layer 
+    final_out = Conv2D(filters=3, kernel_size=(3, 3), strides=(1, 1), activation=None, padding='same')(x)
 
     model = Model(input=_input, output=final_out)
     print model.summary()
