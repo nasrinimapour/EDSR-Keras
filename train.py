@@ -121,7 +121,7 @@ def calculate_psnr_ssim(prediction_images, truth_images):
     batch_psnr = []
     batch_ssim = []
     for i in range(prediction_images.shape[0]):
-        i_ssim =  ssim(truth_images[i], truth_images[i], multichannel=True)
+        i_ssim =  ssim(truth_images[i], prediction_images[i], multichannel=True)
         i_psnr = psnr(truth_images[i], prediction_images[i])
 
         batch_ssim.extend([i_ssim])
