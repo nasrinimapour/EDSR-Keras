@@ -188,6 +188,6 @@ if __name__ == "__main__":
     adam_optimizer = Adam(lr=1e-4, beta_1=0.9, beta_2=0.999, epsilon=1e-8)
     cnn_model.compile(loss='mae', optimizer=adam_optimizer, metrics=[PSNR])
     checkpoint, lrate, tbCallBack, save_filter_callback = set_callbacks()
-    cnn_model.fit_generator(dataGenerator(), steps_per_epoch=3, nb_epoch=EPOCHS, verbose=1,
+    cnn_model.fit_generator(dataGenerator(), steps_per_epoch=TOTAL_DATA_NUMBER / BATCH_SIZE, nb_epoch=EPOCHS, verbose=1,
                             class_weight=None,
                             nb_worker=1, callbacks=[checkpoint, lrate, tbCallBack, save_filter_callback])
