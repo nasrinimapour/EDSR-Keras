@@ -111,14 +111,13 @@ class SaveFilters_And_Get_SSIM_PSNR_Callback(Callback):
 
 def get_psnr_ssim_on_validation(cnn_model, validation_inputs, validation_outputs):
     print 'CALCULATING PSNR AND SSIM ON VALIDATION DATASET'
-    validion_outputs_images = validation_outputs
-    cnn_model_prediction = cnn_model.predict(validation_inputs) 
-    cnn_model_prediction = np.array(cnn_model_prediction)
+    prediction = cnn_model.predict(validation_inputs) 
+    prediction = np.array(prediction)
     all_psnr = []
     all_ssim = []
-    for i in range(validion_outputs_images.shape[0]):
-        i_ssim =  compare_ssim(validion_outputs_images[i], cnn_model_prediction[i], multichannel=True)
-        i_psnr = compare_psnr(validion_outputs_images[i], cnn_model_prediction[i])
+    for i in range(validation_outputs.shape[0]):
+        i_ssim =  compare_ssim(validation_outputs[i], prediction[i], multichannel=True)
+        i_psnr = compare_psnr(validation_outputs[i], prediction[i])
 
         all_ssim.extend([i_ssim])
         all_psnr.extend([i_psnr])
