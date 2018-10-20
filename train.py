@@ -8,12 +8,11 @@ import os
 import keras.backend as K
 import math
 import cv2
-from skimage.measure import compare_ssim as ssim
+from skimage.measure import compare_ssim
+from skimage.measure import compare_psnr
 from tqdm import tqdm
 import tensorflow as tf
 import matplotlib.pyplot as plt
-import math
-from skimage import img_as_float
 
 BATCH_SIZE = 16
 EPOCHS = 300
@@ -110,45 +109,21 @@ class SaveFilters_And_Get_SSIM_PSNR_Callback(Callback):
         return
 
 
-def psnr(img1, img2):
-    mse = np.mean( (img1.astype('float32') - img2.astype('float32')) ** 2 )
-    if mse == 0:
-        return 100
-    PIXEL_MAX = 255.0
-    return 20 * math.log10(PIXEL_MAX / math.sqrt(mse))
-
-def calculate_psnr_ssim(prediction_images, truth_images):
-    batch_psnr = []
-    batch_ssim = []
-    for i in range(prediction_images.shape[0]):
-        i_ssim =  ssim(truth_images[i], prediction_images[i], multichannel=True)
-        i_psnr = psnr(truth_images[i], prediction_images[i])
-
-        batch_ssim.extend([i_ssim])
-        batch_psnr.extend([i_psnr])
-
-    return batch_psnr, batch_ssim
-
-
 def get_psnr_ssim_on_validation(cnn_model, validation_inputs, validation_outputs):
     print 'CALCULATING PSNR AND SSIM ON VALIDATION DATASET'
     validion_outputs_images = validation_outputs
-    validion_outputs_images = validion_outputs_images.astype('uint8')
-
+    cnn_model_prediction = cnn_model.predict(validation_inputs) 
+    cnn_model_prediction = np.array(cnn_model_prediction)
     all_psnr = []
     all_ssim = []
-    for i in tqdm(range(0, len(validation_inputs), BATCH_SIZE)):
-        cnn_model_prediction = cnn_model.predict(validation_inputs[i:i + BATCH_SIZE]) * 255. + MEAN_IMAGE_OUTPUT.astype('float32')
-        cnn_model_prediction = np.array(cnn_model_prediction)
-        cnn_model_prediction = cnn_model_prediction.astype('uint8')
+    for i in range(validion_outputs_images.shape[0]):
+        i_ssim =  compare_ssim(validion_outputs_images[i], cnn_model_prediction[i], multichannel=True)
+        i_psnr = compare_psnr(validion_outputs_images[i], cnn_model_prediction[i])
 
-        batch_psnr, batch_ssim = calculate_psnr_ssim(cnn_model_prediction, validion_outputs_images)
-        all_psnr += batch_psnr
-        all_ssim += batch_ssim
+        all_ssim.extend([i_ssim])
+        all_psnr.extend([i_psnr])
 
-    all_psnr = np.array(all_psnr)
     mean_psnr = np.mean(all_psnr)
-    all_ssim = np.array(all_ssim)
     mean_ssim = np.mean(all_ssim)
 
     return mean_psnr, mean_ssim
@@ -190,4 +165,4 @@ if __name__ == "__main__":
     checkpoint, lrate, tbCallBack, save_filter_callback = set_callbacks()
     cnn_model.fit_generator(dataGenerator(), steps_per_epoch=TOTAL_DATA_NUMBER / BATCH_SIZE, nb_epoch=EPOCHS, verbose=1,
                             class_weight=None,
-                            nb_worker=1, callbacks=[checkpoint, lrate, tbCallBack, save_filter_callback])
+nb_worker=1, callbacks=[checkpoint, lrate, tbCallBack, save_filter_callback])
