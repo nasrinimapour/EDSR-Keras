@@ -8,8 +8,8 @@ import os
 import keras.backend as K
 import math
 import cv2
-from skimage.measure import compare_ssim
 from skimage.measure import compare_psnr
+from skimage.measure import compare_ssim
 from tqdm import tqdm
 import tensorflow as tf
 import matplotlib.pyplot as plt
@@ -80,7 +80,7 @@ def dataGenerator():
 
 MEAN_PSNR_EPOCHS = []
 MEAN_SSIM_EPOCHS = []
-class SaveFilters_And_Get_SSIM_PSNR_Callback(Callback):
+class SaveFilters_And_Get_PSNR_SSIM_Callback(Callback):
     def on_train_begin(self, logs={}):
         save_filters(self.model)
         return
@@ -116,11 +116,11 @@ def get_psnr_ssim_on_validation(cnn_model, validation_inputs, validation_outputs
     all_psnr = []
     all_ssim = []
     for i in range(validation_outputs.shape[0]):
-        i_ssim =  compare_ssim(validation_outputs[i], prediction[i], multichannel=True)
         i_psnr = compare_psnr(validation_outputs[i], prediction[i])
+        i_ssim =  compare_ssim(validation_outputs[i], prediction[i], multichannel=True)
 
-        all_ssim.extend([i_ssim])
         all_psnr.extend([i_psnr])
+        all_ssim.extend([i_ssim])
 
     mean_psnr = np.mean(all_psnr)
     mean_ssim = np.mean(all_ssim)
@@ -151,7 +151,7 @@ def set_callbacks():
     checkpoint = ModelCheckpoint("./Snapshots/model.h5", verbose=1, monitor='val_loss', save_best_only=False,
                                  mode='auto')
     lrate = LearningRateScheduler(step_decay)
-    save_filter_callback = SaveFilters_And_Get_SSIM_PSNR_Callback()
+    save_filter_callback = SaveFilters_And_Get_PSNR_SSIM_Callback()
 
     return checkpoint, lrate, tbCallBack, save_filter_callback
 
