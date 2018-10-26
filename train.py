@@ -148,7 +148,7 @@ def set_callbacks():
     if not os.path.isdir('Snapshots'):
         os.mkdir('Snapshots')
     tbCallBack = TensorBoard(log_dir='Graph', histogram_freq=0, write_graph=True, write_images=True)
-    checkpoint = ModelCheckpoint("./Snapshots/model.h5", verbose=1, monitor='val_loss', save_best_only=False,
+    checkpoint = ModelCheckpoint("./Snapshots/model.h5", verbose=1, monitor='val_loss', save_best_only=True,
                                  mode='auto')
     lrate = LearningRateScheduler(step_decay)
     save_filter_callback = SaveFilters_And_Get_PSNR_SSIM_Callback()
@@ -165,3 +165,4 @@ if __name__ == "__main__":
     cnn_model.fit_generator(dataGenerator(), steps_per_epoch=TOTAL_DATA_NUMBER / BATCH_SIZE, nb_epoch=EPOCHS, verbose=1,
                             class_weight=None,
 nb_worker=1, callbacks=[checkpoint, lrate, tbCallBack, save_filter_callback])
+cnn_model.save('./Snapshots/model.h5')
